@@ -2,39 +2,50 @@ package ColectionsListaseArrays.dao;
 
 import ColectionsListaseArrays.domain.GenericDomain;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 public abstract class GenericDAO< ID, T extends GenericDomain<ID>>{
 
-    private final List<T> db = new ArrayList<>();
+    private final Map<ID, T> db = new LinkedHashMap<>();
 
     public T save(T domain){
-        db.add(domain);
+        db.put(domain.getId(), domain);
         return domain;
     }
 
     @SafeVarargs
     public final boolean saveAll(T... domains){
-        return db.addAll(Arrays.stream(domains).toList());
+        Arrays.stream(domains).forEach(d -> db.put(d.getId(), d));
+        return true;
+    }
+
+    public boolean exists(ID id) {
+        return db.containsKey(id);
     }
 
     public T update(ID id, T domain){
-        var stored = find(d -> d.getId().equals(id)).orElseThrow();
-        db.remove(stored);
-        return save(domain);
+        if(!exists(id)) throw new EntityNotFoundException("Id " + id + " não encontrado");
+        db.put(id, domain);
+        return domain;
     }
+
+    public Optional<T> findById(ID id) {
+        return Optional.ofNullable(db.get(id));
+    }
+
+    public boolean deleteById(ID id){
+        return db.remove(id) != null;
+    }
+
     public boolean delete(T domain){
-        return db.remove(domain);
+        return db.remove(domain.getId()) != null;
     }
     public Optional<T> find(Predicate<T> filterCallBack){
-        return db.stream().filter(filterCallBack).findFirst();
+        return db.values().stream().filter(filterCallBack).findFirst();
     }
     public List<T> findAll(){
-        return db;
+        return Collections.unmodifiableList(new ArrayList<>(db.values()));
     }
     public int count(){
         return db.size();
