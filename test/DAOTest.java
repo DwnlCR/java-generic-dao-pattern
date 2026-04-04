@@ -1,6 +1,8 @@
 package ColectionsListaseArrays.test;
+
 import ColectionsListaseArrays.domain.ClientDomain;
 import ColectionsListaseArrays.dao.ClientDAO;
+import ColectionsListaseArrays.dao.EntityNotFoundException;
 import ColectionsListaseArrays.dao.UserDAO;
 import ColectionsListaseArrays.domain.UserDomain;
 
@@ -8,82 +10,110 @@ import java.util.List;
 import java.util.Optional;
 
 public class DAOTest {
+
     public static UserDAO user = new UserDAO();
     public static ClientDAO client = new ClientDAO();
+
     public static void main(String[] args) {
         testUserDAO();
         testClientDAO();
     }
-    public static void testUserDAO(){
+
+    public static void testUserDAO() {
         System.out.println("===UserDAOTest(start)===");
-        UserDomain user1 = new UserDomain(1,"Daniel", 19);
-        UserDomain user2 = new UserDomain(2,"Junior", 32);
-        UserDomain user3 = new UserDomain(3,"Wanderlei", 65);
+
+        UserDomain user1 = new UserDomain(1, "Daniel", 19);
+        UserDomain user2 = new UserDomain(2, "Junior", 32);
+        UserDomain user3 = new UserDomain(3, "Wanderlei", 65);
 
         user.save(user1);
         user.saveAll(user2, user3);
         assert user.count() == 3 : "ERRO: count esperado 3";
 
-        UserDomain user4 = new UserDomain(4,"Alice",25);
-        UserDomain user5 = new UserDomain(5,"Lucas",40);
-        boolean savedAll = user.saveAll(user4, user5);
-        assert savedAll : "ERRO: savedAll falhou";
-        assert user.count() == 5 : "ERRO: count esperado 5";
+        assert user.exists(1) : "ERRO: id 1 deveria existir";
+        assert !user.exists(99) : "ERRO: id 99 não deveria existir";
 
-        Optional<UserDomain> found = user.find(d -> d.getId().equals(1));
-        assert found.isPresent() : "ERRO: id 1 não encontrado";
+        Optional<UserDomain> found = user.findById(1);
+        assert found.isPresent() : "ERRO: findById id 1 não encontrado";
+        assert found.get().getName().equals("Daniel") : "ERRO: nome incorreto no findById";
 
-        Optional<UserDomain> notFound = user.find(d -> d.getId().equals(99));
-        assert notFound.isEmpty() : "ERRO: usuário inexistente encontrado";
+        Optional<UserDomain> notFound = user.findById(99);
+        assert notFound.isEmpty() : "ERRO: findById retornou algo para id inexistente";
 
-        UserDomain user1Up = new UserDomain(1,"Daniel Updated",20);
+        Optional<UserDomain> foundByName = user.find(d -> d.getName().equals("Junior"));
+        assert foundByName.isPresent() : "ERRO: find por nome falhou";
+
+        UserDomain user1Up = new UserDomain(1, "Daniel Updated", 20);
         UserDomain updated = user.update(1, user1Up);
         assert updated.getName().equals("Daniel Updated") : "ERRO: falha no update";
 
-        boolean deleted = user.delete(user2);
-        assert deleted : "ERRO: delete falhou";
-        assert user.find(d -> d.getId().equals(2)).isEmpty() : "ERRO: usuário 2 continua existindo";
+        try {
+            user.update(99, new UserDomain(99, "Fake", 0));
+            assert false : "ERRO: deveria ter lançado EntityNotFoundException";
+        } catch (EntityNotFoundException e) {
+        }
 
-        UserDomain deleted2 = new UserDomain(99,"Fake",0);
-        boolean isDeleted = user.delete(deleted2);
-        assert !isDeleted : "ERRO: deletou um objeto inexistente";
+        boolean deletedById = user.deleteById(3);
+        assert deletedById : "ERRO: deleteById falhou";
+        assert !user.exists(3) : "ERRO: id 3 ainda existe após deleteById";
+
+        boolean deletedByIdFake = user.deleteById(99);
+        assert !deletedByIdFake : "ERRO: deleteById retornou true para id inexistente";
+
+        boolean deleted = user.delete(user2);
+        assert deleted : "ERRO: delete por objeto falhou";
+        assert !user.exists(2) : "ERRO: id 2 ainda existe após delete";
 
         List<UserDomain> allUsers = user.findAll();
-        assert allUsers.size() == 4 : "ERRO: retorno errado do findAll";
+        assert allUsers.size() == 1 : "ERRO: findAll retornou tamanho errado";
+        try {
+            allUsers.add(new UserDomain(10, "Teste", 10));
+            assert false : "ERRO: findAll deveria retornar lista imutável";
+        } catch (UnsupportedOperationException e) {
+        }
 
         System.out.println("===UserDAOTest(end)===\n");
     }
-    public static void testClientDAO(){
+
+    public static void testClientDAO() {
         System.out.println("===ClientDAOTest(start)===");
-        ClientDomain client1 = new ClientDomain("A","Daniel","daniel@gmail.com");
-        ClientDomain client2 = new ClientDomain("B","Junior","junior@gmail.com");
-        ClientDomain client3 = new ClientDomain("C","Wanderlei","wanderlei@gmail.com");
+
+        ClientDomain client1 = new ClientDomain("A", "Daniel", "daniel@gmail.com");
+        ClientDomain client2 = new ClientDomain("B", "Junior", "junior@gmail.com");
+        ClientDomain client3 = new ClientDomain("C", "Wanderlei", "wanderlei@gmail.com");
 
         client.save(client1);
         client.save(client2);
         client.save(client3);
         assert client.count() == 3 : "ERRO: count esperado 3";
 
-        Optional<ClientDomain> found = client.find(d -> d.getEmail().equals("daniel@gmail.com"));
-        assert found.isPresent() : "ERRO: client1 não encontrado";
+        assert client.exists("A") : "ERRO: id A deveria existir";
+        assert !client.exists("Z") : "ERRO: id Z não deveria existir";
 
-        Optional<ClientDomain> notFound = client.find(d -> d.getEmail().equals("levi@gmail.com"));
-        assert notFound.isEmpty() : "ERRO: email inexistente encontrado";
+        Optional<ClientDomain> found = client.findById("A");
+        assert found.isPresent() : "ERRO: findById id A não encontrado";
+        assert found.get().getName().equals("Daniel") : "ERRO: nome incorreto no findById";
 
-        ClientDomain client1Up = new ClientDomain("A","Daniel Updated","daniel@gmail.com");
-        ClientDomain updated = client.update("A",client1Up);
+        Optional<ClientDomain> notFound = client.findById("Z");
+        assert notFound.isEmpty() : "ERRO: findById retornou algo para id inexistente";
+
+        Optional<ClientDomain> foundByEmail = client.find(d -> d.getEmail().equals("junior@gmail.com"));
+        assert foundByEmail.isPresent() : "ERRO: find por email falhou";
+
+        ClientDomain client1Up = new ClientDomain("A", "Daniel Updated", "daniel@gmail.com");
+        ClientDomain updated = client.update("A", client1Up);
         assert updated.getName().equals("Daniel Updated") : "ERRO: update de client1 falhou";
+
+        boolean deletedById = client.deleteById("C");
+        assert deletedById : "ERRO: deleteById falhou";
+        assert !client.exists("C") : "ERRO: id C ainda existe após deleteById";
 
         boolean deleted = client.delete(client2);
         assert deleted : "ERRO: delete de client2 falhou";
-        assert client.find(d -> d.getEmail().equals("junior@gmail.com")).isEmpty() : "ERRO: client2 ainda existente";
-
-        ClientDomain deleted2 = new ClientDomain("X","Luan","luan@gmail.com");
-        boolean isDeleted = client.delete(deleted2);
-        assert !isDeleted : "ERRO: deletou um objeto inexistente";
+        assert !client.exists("B") : "ERRO: id B ainda existe após delete";
 
         List<ClientDomain> allClients = client.findAll();
-        assert allClients.size() == 2 : "ERRO: findAl retornou tamanho errado";
+        assert allClients.size() == 1 : "ERRO: findAll retornou tamanho errado";
 
         System.out.println("===ClientDAOTest(end)===\n");
     }
