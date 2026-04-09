@@ -1,6 +1,8 @@
-package ColectionsListaseArrays.dao;
+package dao_pattern.dao;
 
-import ColectionsListaseArrays.domain.GenericDomain;
+import dao_pattern.Exceptions.EmptyStorageException;
+import dao_pattern.Exceptions.EntityNotFoundException;
+import dao_pattern.domain.GenericDomain;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -31,7 +33,14 @@ public abstract class GenericDAO< ID, T extends GenericDomain<ID>>{
     }
 
     public Optional<T> findById(ID id) {
+        verifyStorage();
         return Optional.ofNullable(db.get(id));
+    }
+
+    public T findByIdOrThrow(ID id) {
+        verifyStorage();
+        return Optional.ofNullable(db.get(id))
+                .orElseThrow(() -> new EntityNotFoundException("Id " + id + " não encontrado"));
     }
 
     public boolean deleteById(ID id){
@@ -45,9 +54,20 @@ public abstract class GenericDAO< ID, T extends GenericDomain<ID>>{
         return db.values().stream().filter(filterCallBack).findFirst();
     }
     public List<T> findAll(){
+        try {
+            verifyStorage();
+        }catch (EmptyStorageException ex){
+            ex.printStackTrace();
+            return new ArrayList<>();
+        }
         return Collections.unmodifiableList(new ArrayList<>(db.values()));
     }
+
     public int count(){
         return db.size();
+    }
+
+    public void verifyStorage(){
+        if(db.isEmpty()) throw new EmptyStorageException("O armazenamento está vazio");
     }
 }

@@ -1,4 +1,4 @@
-package ColectionsListaseArrays.domain;
+package dao_pattern.domain;
 
 import java.util.Objects;
 

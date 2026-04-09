@@ -1,4 +1,4 @@
-package ColectionsListaseArrays.domain;
+package dao_pattern.domain;
 
 import java.util.Objects;
 
@@ -57,5 +57,4 @@ public class UserDomain extends GenericDomain<Integer>{
     public int hashCode() {
         return Objects.hash(super.hashCode(), name, age);
     }
-}
-
+    }

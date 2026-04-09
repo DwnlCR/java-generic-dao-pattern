@@ -1,22 +1,141 @@
-package ColectionsListaseArrays.test;
+package dao_pattern.test;
 
-import ColectionsListaseArrays.domain.ClientDomain;
-import ColectionsListaseArrays.dao.ClientDAO;
-import ColectionsListaseArrays.dao.EntityNotFoundException;
-import ColectionsListaseArrays.dao.UserDAO;
-import ColectionsListaseArrays.domain.UserDomain;
+import dao_pattern.Exceptions.EmptyStorageException;
+import dao_pattern.Exceptions.ValidatorException;
+import dao_pattern.UserValidator.UserDomainValidator;
+import dao_pattern.domain.ClientDomain;
+import dao_pattern.dao.ClientDAO;
+import dao_pattern.Exceptions.EntityNotFoundException;
+import dao_pattern.dao.UserDAO;
+import dao_pattern.domain.MenuOption;
+import dao_pattern.domain.UserDomain;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
+
+
 
 public class DAOTest {
 
-    public static UserDAO user = new UserDAO();
+    public static UserDAO users = new UserDAO();
     public static ClientDAO client = new ClientDAO();
+    public static UserDomainValidator validator = new UserDomainValidator();
+    public static Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) {
-        testUserDAO();
-        testClientDAO();
+        while (true) {
+            System.out.println("Bem vindo, selecione a operação desejada: ");
+            System.out.println("1 - Cadastrar");
+            System.out.println("2 - Atualizar");
+            System.out.println("3 - Excluir");
+            System.out.println("4 - Buscar por Id");
+            System.out.println("5 - Listar todos");
+            System.out.println("6 - Sair");
+            var userInput = sc.nextInt();
+            var selectedOption = MenuOption.values()[userInput - 1];
+            switch (selectedOption){
+                case SAVE -> {
+                    try{
+                        UserDomain saved = users.save(requestToSave());
+                        System.out.printf("Usuario %s cadastrado \n", saved);
+                    }catch (ValidatorException ex){
+                        System.out.println(ex.getMessage());
+                        ex.printStackTrace();
+                    }finally {
+                        System.out.println("=================");
+                    }
+                }
+                case UPDATE -> {
+                    try{
+                        UserDomain updated = requestToUpdate();
+                        users.update(updated.getId(), updated);
+                        System.out.printf("Usuario %s atualizado \n", updated);
+                    }catch (EntityNotFoundException | EmptyStorageException ex){
+                        System.out.println(ex.getMessage());
+                    } catch (ValidatorException ex){
+                        System.out.println(ex.getMessage());
+                        ex.printStackTrace();
+                    }finally {
+                        System.out.println("=================");
+                    }
+                }
+                case DELETE -> {
+                    try{
+                        users.deleteById(requestToId());
+                        System.out.printf("Usuario deletado \n");
+                    }catch (EmptyStorageException | EntityNotFoundException ex){
+                        System.out.println(ex.getMessage());
+                    }catch (ValidatorException ex){
+                        System.out.println(ex.getMessage());
+                        ex.printStackTrace();
+                    }finally {
+                        System.out.println("=================");
+                    }
+                }
+                case FIND_BY_ID -> {
+                    try{
+                       int id = requestToId();
+                       UserDomain userFound = users.findByIdOrThrow(id);
+                        System.out.println("Usuario com o id " + id + " encontrado\n");
+                        System.out.println(userFound);
+                    }catch (EntityNotFoundException | EmptyStorageException ex){
+                        System.out.println(ex.getMessage());
+                    }catch (ValidatorException ex){
+                        System.out.println(ex.getMessage());
+                        ex.printStackTrace();
+                    }finally {
+                        System.out.println("=================");
+                    }
+                }
+                case FIND_ALL -> {
+                    try{
+                        List<UserDomain> user = users.findAll();
+                        System.out.println("---Usuarios cadastrados---");
+                        user.forEach(System.out::println);
+                    }catch (EmptyStorageException | EntityNotFoundException ex){
+                        System.out.println(ex.getMessage());
+                    }catch (ValidatorException ex){
+                        System.out.println(ex.getMessage());
+                        ex.printStackTrace();
+                    }finally {
+                        System.out.println("=================");
+                    }
+                }
+                case EXIT -> System.exit(0);
+            }
+        }
+    }
+
+    public static UserDomain requestToSave(){
+        sc.nextLine();
+        System.out.println("Informe o nome do usuario: ");
+        String name = sc.nextLine();
+        System.out.println("Informe a idade do usuario: ");
+        int age = sc.nextInt();
+        return validateInputs(0, name, age);
+    }
+
+    public static UserDomain validateInputs(final int id, final String name, final int age){
+        UserDomain users = new UserDomain(id, name, age);
+        validator.validate(users);
+        return users;
+    }
+
+    public static UserDomain requestToUpdate(){
+        sc.nextLine();
+        System.out.println("Informe o id do usuario: ");
+        int id = sc.nextInt();
+        System.out.println("Informe o nome do usuario: ");
+        String name = sc.nextLine();
+        System.out.println("Informe a idade do usuario: ");
+        int age = sc.nextInt();
+        return validateInputs(id, name, age);
+    }
+
+    public static int requestToId(){
+        System.out.println("Informe o id do usuario procurado: ");
+        return sc.nextInt();
     }
 
     public static void testUserDAO() {
@@ -26,45 +145,45 @@ public class DAOTest {
         UserDomain user2 = new UserDomain(2, "Junior", 32);
         UserDomain user3 = new UserDomain(3, "Wanderlei", 65);
 
-        user.save(user1);
-        user.saveAll(user2, user3);
-        assert user.count() == 3 : "ERRO: count esperado 3";
+        users.save(user1);
+        users.saveAll(user2, user3);
+        assert users.count() == 3 : "ERRO: count esperado 3";
 
-        assert user.exists(1) : "ERRO: id 1 deveria existir";
-        assert !user.exists(99) : "ERRO: id 99 não deveria existir";
+        assert users.exists(1) : "ERRO: id 1 deveria existir";
+        assert !users.exists(99) : "ERRO: id 99 não deveria existir";
 
-        Optional<UserDomain> found = user.findById(1);
+        Optional<UserDomain> found = users.findById(1);
         assert found.isPresent() : "ERRO: findById id 1 não encontrado";
         assert found.get().getName().equals("Daniel") : "ERRO: nome incorreto no findById";
 
-        Optional<UserDomain> notFound = user.findById(99);
+        Optional<UserDomain> notFound = users.findById(99);
         assert notFound.isEmpty() : "ERRO: findById retornou algo para id inexistente";
 
-        Optional<UserDomain> foundByName = user.find(d -> d.getName().equals("Junior"));
+        Optional<UserDomain> foundByName = users.find(d -> d.getName().equals("Junior"));
         assert foundByName.isPresent() : "ERRO: find por nome falhou";
 
         UserDomain user1Up = new UserDomain(1, "Daniel Updated", 20);
-        UserDomain updated = user.update(1, user1Up);
+        UserDomain updated = users.update(1, user1Up);
         assert updated.getName().equals("Daniel Updated") : "ERRO: falha no update";
 
         try {
-            user.update(99, new UserDomain(99, "Fake", 0));
+            users.update(99, new UserDomain(99, "Fake", 0));
             assert false : "ERRO: deveria ter lançado EntityNotFoundException";
         } catch (EntityNotFoundException e) {
         }
 
-        boolean deletedById = user.deleteById(3);
+        boolean deletedById = users.deleteById(3);
         assert deletedById : "ERRO: deleteById falhou";
-        assert !user.exists(3) : "ERRO: id 3 ainda existe após deleteById";
+        assert !users.exists(3) : "ERRO: id 3 ainda existe após deleteById";
 
-        boolean deletedByIdFake = user.deleteById(99);
+        boolean deletedByIdFake = users.deleteById(99);
         assert !deletedByIdFake : "ERRO: deleteById retornou true para id inexistente";
 
-        boolean deleted = user.delete(user2);
+        boolean deleted = users.delete(user2);
         assert deleted : "ERRO: delete por objeto falhou";
-        assert !user.exists(2) : "ERRO: id 2 ainda existe após delete";
+        assert !users.exists(2) : "ERRO: id 2 ainda existe após delete";
 
-        List<UserDomain> allUsers = user.findAll();
+        List<UserDomain> allUsers = users.findAll();
         assert allUsers.size() == 1 : "ERRO: findAll retornou tamanho errado";
         try {
             allUsers.add(new UserDomain(10, "Teste", 10));
