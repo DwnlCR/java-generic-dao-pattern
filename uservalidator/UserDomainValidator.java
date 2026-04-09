@@ -1,6 +1,6 @@
-package dao_pattern.UserValidator;
+package dao_pattern.uservalidator;
 
-import dao_pattern.Exceptions.ValidatorException;
+import dao_pattern.exceptions.ValidatorException;
 import dao_pattern.domain.UserDomain;
 
 public class UserDomainValidator implements Validator<UserDomain> {

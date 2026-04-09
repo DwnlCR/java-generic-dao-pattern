@@ -1,4 +1,4 @@
-package dao_pattern.Exceptions;
+package dao_pattern.exceptions;
 
 public class EntityNotFoundException extends RuntimeException {
     public EntityNotFoundException(String message) {

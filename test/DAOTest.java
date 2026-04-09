@@ -1,11 +1,11 @@
 package dao_pattern.test;
 
-import dao_pattern.Exceptions.EmptyStorageException;
-import dao_pattern.Exceptions.ValidatorException;
-import dao_pattern.UserValidator.UserDomainValidator;
+import dao_pattern.exceptions.EmptyStorageException;
+import dao_pattern.exceptions.ValidatorException;
+import dao_pattern.uservalidator.UserDomainValidator;
 import dao_pattern.domain.ClientDomain;
 import dao_pattern.dao.ClientDAO;
-import dao_pattern.Exceptions.EntityNotFoundException;
+import dao_pattern.exceptions.EntityNotFoundException;
 import dao_pattern.dao.UserDAO;
 import dao_pattern.domain.MenuOption;
 import dao_pattern.domain.UserDomain;

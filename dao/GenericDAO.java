@@ -1,7 +1,7 @@
 package dao_pattern.dao;
 
-import dao_pattern.Exceptions.EmptyStorageException;
-import dao_pattern.Exceptions.EntityNotFoundException;
+import dao_pattern.exceptions.EmptyStorageException;
+import dao_pattern.exceptions.EntityNotFoundException;
 import dao_pattern.domain.GenericDomain;
 
 import java.util.*;
