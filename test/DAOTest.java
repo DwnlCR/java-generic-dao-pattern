@@ -123,12 +123,12 @@ public class DAOTest {
     }
 
     public static UserDomain requestToUpdate(){
-        sc.nextLine();
         System.out.println("Informe o id do usuario: ");
         int id = sc.nextInt();
-        System.out.println("Informe o nome do usuario: ");
+        sc.nextLine();
+        System.out.println("Informe o novo nome do usuario: ");
         String name = sc.nextLine();
-        System.out.println("Informe a idade do usuario: ");
+        System.out.println("Informe a nova idade do usuario: ");
         int age = sc.nextInt();
         return validateInputs(id, name, age);
     }
